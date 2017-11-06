@@ -23,3 +23,11 @@ dist/
 kaggle_data/*.csv
 kaggle_data/*.7z
 submissions/*/training_output
+
+*/*.csv
+*/*.gz
+*.dot
+
+*~
+
+notebook

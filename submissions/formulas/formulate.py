@@ -45,7 +45,7 @@ class Generator:
         formula = "p[0]+"
         ipar = 1
         for o in self.ops:
-            for i in range(0,complexity) : gen.split(o)
+            for i in range(0,complexity) : self.split(o)
             p = ""
             if o.op == "+":
                 p = "p[" + str(ipar) + "]*"
@@ -62,22 +62,16 @@ def funk(x, y, p = [], formula = "p[0] + ( (p[1]*x) + ( p[2]*(x**2) ) )"):
 
 def formulate():
     #   return "2. * np.cos(np.arctan2(y,x)) / np.sqrt(x**2+y**2)"
-    return "2. * y*y/x / np.sqrt(x**3+y**2+x**2)"
+    #  return "2. * y*y/x / np.sqrt(x**3+y**2+x**2)"
+    myops = np.random.choice(["+","*"],20,p=[0.8,0.2])
+    gen = Generator("+")
 
+    for o in myops:
+        gen.split(o)
 
+    print(gen.formulate(12))
 
-
-
-myops = np.random.choice(["+","*"],20,p=[0.8,0.2])
-gen = Generator("+")
-
-for o in myops:
-    gen.split(o)
-
-print(gen.formulate(2))
-
-
-
+    return gen.formulate(12)
 
 
 

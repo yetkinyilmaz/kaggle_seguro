@@ -22,14 +22,14 @@ score_types = [
 
 
 def get_cv(X, y):
-    cv = StratifiedShuffleSplit(n_splits=8, test_size=0.5, random_state=57)
+    cv = StratifiedShuffleSplit(n_splits=1, test_size=0.5, random_state=57)
     return cv.split(X, y)
 
 
 def get_train_data(path='.'):
     test = os.getenv('RAMP_TEST_MODE', 0)
     if test:
-        data = pd.read_csv(os.path.join(path, 'data', 'train.csv'))
+        data = pd.read_csv(os.path.join(path, 'chopped_data', 'train.csv'))
     else:
         data = pd.read_csv(os.path.join(path, 'kaggle_data', 'train.csv'))
     y_array = data[_target_column_name].values
@@ -40,7 +40,7 @@ def get_train_data(path='.'):
 def get_test_data(path='.'):
     test = os.getenv('RAMP_TEST_MODE', 0)
     if test:
-        X_df = pd.read_csv(os.path.join(path, 'data', 'test.csv'))
+        X_df = pd.read_csv(os.path.join(path, 'chopped_data', 'test.csv'))
     else:
         X_df = pd.read_csv(os.path.join(path, 'kaggle_data', 'test.csv'))
     y_array = np.zeros(len(X_df))  # dummy labels for syntax

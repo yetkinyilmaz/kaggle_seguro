@@ -26,9 +26,9 @@ class ClassifierRandomForest(BaseEstimator):
 # ----------------------------------------------------------------------
 
 class ClassifierSimpleTree(BaseEstimator):
-    def __init__(self, nleaf=20):
+    def __init__(self, nleaf=80):
         self.clf = DecisionTreeClassifier(
-            max_depth=20,
+            max_depth=80,
             max_features=57,
             max_leaf_nodes=nleaf
         )
@@ -90,7 +90,7 @@ class ClassifierXGB(BaseEstimator):
 
 
 Classifier = ClassifierSimpleTree
-# Classifier = ClassifierXGB
+#Classifier = ClassifierXGB
 
 # class Classifier(ClassifierSimpleTree):
 #    def __init__(self):

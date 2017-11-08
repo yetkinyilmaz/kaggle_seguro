@@ -98,17 +98,28 @@ def encode(formula="x + y"):
 
 #    def __init__(self, id, status, obj, a, b, c):
 
-    s = Node(0, "=", 0, 1, 1)
-    n1 = Node(1, "*", 0, 2, 3)
-    n2 = Node(2, "+", 1, 4, 5)
+    ft = FormulaTree()
+    ft.add_node()
+    tree = ft.nodes
+    print(formula, " : ", print_tree(tree, 0))
 
-    n3 = Node(3, "x1", 2)
-    n4 = Node(4, "x2", 1)
-    n5 = Node(5, "x3", 2)
 
-    tree = np.array([s, n1, n2, n3, n4, n5])
+class FormulaTree:
+    def __init__(self):
+        s = Node(0, "=", 0, 1, 1)
+        n1 = Node(1, "*", 0, 2, 3)
+        n2 = Node(2, "+", 1, 4, 5)
 
-    print(formula, " : ", print_tree(tree,0))
+        n3 = Node(3, "x1", 2)
+        n4 = Node(4, "x2", 1)
+        self.nodes = np.array([s, n1, n2, n3, n4])
+
+    def add_node(self):
+        n5 = Node(5, "x3", 2)
+        self.nodes = np.append(self.nodes, n5)
+
+    def split_node(self, node):
+        self.nodes[].status = np.append(self.nodes, n5)
 
 
 def funk(x, y, p=[], formula="p[0] + ( (p[1]*x) + ( p[2]*(x**2) ) )"):

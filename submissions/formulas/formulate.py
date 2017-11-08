@@ -15,7 +15,6 @@ class Node:
         # 2 : Branching operation
 
 
-
 class Dimension:
     Spatial = -3.0
     Angular = 0.
@@ -68,25 +67,23 @@ class Generator:
 
 
 def attach(text, obj):
+    print("text: ", text, ",    obj: ", obj)
     return text + obj
 
 
-def print_tree(tree):
-    status = 0
-    index = 0
+def print_tree(tree, inode=0):
+    print("printing tree starting from index ", inode)
+    index = inode
+    node = tree[index]
+    status = node.status
     text = ""
-    while(status != 1):
-        node = tree[index]
-        status = node.status
-        if(status == 1):
-            op = tree[node.a]
-            b = tree[op.b]
-            c = tree[op.c]
-            text = attach(text, b.object)
-            text = attach(text, op.object)
-            text = attach(text, c.object)
-        index += 1
-
+    if(status == 1):
+        text = node.object
+        print(text)
+    else:
+        text = (print_tree(tree, node.b) +
+                node.object +
+                print_tree(tree, node.c))
     return text
 
 
@@ -97,7 +94,7 @@ def encode(formula="x + y"):
     s.id = 0
     s.a = 0
     s.b = 1
-    s.c = 2
+    s.c = 1
     s.status = 0
 
     n0 = Node()
@@ -141,12 +138,9 @@ def encode(formula="x + y"):
     n4.c = 0
     n4.status = 1
 
+    tree = np.array([s, n0, n1, n2, n3, n4])
 
-
-    tree = np.array([s,n0,n1,n2,n3,n4])
-
-    print(formula," : ",print_tree(tree))
-
+    print(formula, " : ", print_tree(tree,0))
 
 
 def funk(x, y, p=[], formula="p[0] + ( (p[1]*x) + ( p[2]*(x**2) ) )"):
@@ -165,12 +159,3 @@ def test():
     formula = gen.formulate(12)
 
     return formula
-
-
-
-
-
-
-
-
-

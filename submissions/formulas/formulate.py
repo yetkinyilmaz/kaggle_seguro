@@ -1,18 +1,22 @@
-import pandas as pd
 import numpy as np
 
 
 class Node:
-    def __init__(self):
+    def __init__(self, id, obj, a, b=0, c=0):
         # a -> b,  c
-        self.a = 0
-        self.b = 0
-        self.c = 0
-        self.object = Operation("+")
-        self.status = 0
+        self.a = a
+        self.b = b
+        self.c = c
+        self.object = obj
+        self.status = 1
+        if((obj == "=") | (obj == "+") | (obj == "*")):
+            self.status = 2
         # 0 : Nothing
         # 1 : End node
         # 2 : Branching operation
+        else:
+            self.b = 0
+            self.c = 0
 
 
 class Dimension:
@@ -81,64 +85,28 @@ def print_tree(tree, inode=0):
         text = node.object
         print(text)
     else:
-        text = (print_tree(tree, node.b) +
+        text = ("(" +
+                print_tree(tree, node.b) +
                 node.object +
-                print_tree(tree, node.c))
+                print_tree(tree, node.c) +
+                ")"
+                )
     return text
 
 
 def encode(formula="x + y"):
 
-    s = Node()
-    s.object = "="
-    s.id = 0
-    s.a = 0
-    s.b = 1
-    s.c = 1
-    s.status = 0
+#    def __init__(self, id, status, obj, a, b, c):
 
-    n0 = Node()
-#    n0.object = Operation("+")
-    n0.object = "+"
-    n0.id = 1
-    n0.a = 0
-    n0.b = 2
-    n0.c = 3
-    n0.status = 2
+    s = Node(0, "=", 0, 1, 1)
+    n1 = Node(1, "*", 0, 2, 3)
+    n2 = Node(2, "+", 1, 4, 5)
 
-    n1 = Node()
-    n1.object = "x"
-    n1.id = 2
-    n1.a = 1
-    n1.b = 0
-    n1.c = 0
-    n1.status = 1
+    n3 = Node(3, "x1", 2)
+    n4 = Node(4, "x2", 1)
+    n5 = Node(5, "x3", 2)
 
-    n2 = Node()
-    n2.object = "+"
-    n2.id = 3
-    n2.a = 1
-    n2.b = 4
-    n2.c = 5
-    n2.status = 2
-
-    n3 = Node()
-    n3.object = "x3"
-    n3.id = 4
-    n3.a = 3
-    n3.b = 0
-    n3.c = 0
-    n3.status = 1
-
-    n4 = Node()
-    n4.object = "x4"
-    n4.id = 5
-    n4.a = 3
-    n4.b = 0
-    n4.c = 0
-    n4.status = 1
-
-    tree = np.array([s, n0, n1, n2, n3, n4])
+    tree = np.array([s, n1, n2, n3, n4, n5])
 
     print(formula, " : ", print_tree(tree,0))
 

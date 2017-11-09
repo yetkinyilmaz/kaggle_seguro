@@ -4,6 +4,7 @@ import numpy as np
 class Node:
     def __init__(self, id, obj, a, b=0, c=0):
         # a -> b,  c
+        self.id = id
         self.a = a
         self.b = b
         self.c = c
@@ -19,60 +20,28 @@ class Node:
             self.c = 0
 
 
-class Dimension:
-    Spatial = -3.0
-    Angular = 0.
-    Order = 0
-    Flat = True
+class FormulaTree:
+    def __init__(self):
+        root = Node(0, "x", 1, 0, 0)
+        self.nodes = np.array([root])
 
+    def add_node(self, a):
+        i = len(self.nodes)
+        print("i : ", i)
+        self.nodes = np.append(self.nodes, Node(i, "x", a, 0, 0))
+        return i
 
-class Operation:
-    def __init__(self, sym="+"):
-        self.symbol = sym
-        self.a = "x"
-        self.b = "x"
-        self.c = ""
-
-    def split_b(self, sym="+"):
-        self.b = ""
-        opb = Operation(sym)
-        return opb
-
-    d_a = Dimension()
-    d_b = Dimension()
-    d_c = Dimension()
-    a = ""
-    b = ""
-    c = ""
-    symbol = ""
-
-
-class Generator:
-    def __init__(self, dim=1, seed="+"):
-        op = Operation(seed)
-        self.ops = [op]
-
-    def split(self, sign):
-        self.ops = self.ops + [self.ops[len(self.ops) - 1].split_b(sign)]
-
-    def formulate(self, complexity):
-        formula = "p[0]+"
-        ipar = 1
-        for o in self.ops:
-            for i in range(0, complexity):
-                self.split(o)
-            p = ""
-            if o.symbol == "+":
-                p = "p[" + str(ipar) + "]*"
-                ipar += 1
-            print(o.a, o.symbol, p, o.b)
-            formula = formula + o.a + o.symbol + p + o.b
-        return formula
-
-
-def attach(text, obj):
-    print("text: ", text, ",    obj: ", obj)
-    return text + obj
+    def split_node(self, inode):
+        node = self.nodes[inode]
+        status = node.status
+        if(status != 1):
+            print("cannot split intermediate node")
+        else:
+            node.status = 2
+            node.object = "+"
+            node.b = self.add_node(node.id)
+            node.c = self.add_node(node.id)
+            self.nodes[inode] = node
 
 
 def print_tree(tree, inode=0):
@@ -94,47 +63,15 @@ def print_tree(tree, inode=0):
     return text
 
 
-def encode(formula="x + y"):
+def encode(formula="formula"):
 
-#    def __init__(self, id, status, obj, a, b, c):
+    #    def __init__(self, id, status, obj, a, b, c):
 
     ft = FormulaTree()
-    ft.add_node()
     tree = ft.nodes
     print(formula, " : ", print_tree(tree, 0))
 
+    ft.split_node(0)
+    tree = ft.nodes
+    print(formula, " : ", print_tree(tree, 0))
 
-class FormulaTree:
-    def __init__(self):
-        s = Node(0, "=", 0, 1, 1)
-        n1 = Node(1, "*", 0, 2, 3)
-        n2 = Node(2, "+", 1, 4, 5)
-
-        n3 = Node(3, "x1", 2)
-        n4 = Node(4, "x2", 1)
-        self.nodes = np.array([s, n1, n2, n3, n4])
-
-    def add_node(self):
-        n5 = Node(5, "x3", 2)
-        self.nodes = np.append(self.nodes, n5)
-
-    def split_node(self, node):
-        self.nodes[].status = np.append(self.nodes, n5)
-
-
-def funk(x, y, p=[], formula="p[0] + ( (p[1]*x) + ( p[2]*(x**2) ) )"):
-    return eval(formula)
-
-
-def test():
-    #   return "2. * np.cos(np.arctan2(y,x)) / np.sqrt(x**2+y**2)"
-    #  return "2. * y*y/x / np.sqrt(x**3+y**2+x**2)"
-    myops = np.random.choice(["+", "*"], 20, p=[0.8, 0.2])
-    gen = Generator("+")
-
-    for o in myops:
-        gen.split(o)
-
-    formula = gen.formulate(12)
-
-    return formula

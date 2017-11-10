@@ -80,10 +80,13 @@ class FormulaTree:
         return text
 
     def add_coefficients(self, cname="C"):
+        add_brackets = True
         c = 0
         for node in self.nodes:
             status = node.status
             if(status == 1):
-                coefficient = cname + "[" + str(c) + "]"
+                coefficient = cname + str(c)
+                if(add_brackets):
+                    coefficient = cname + "[" + str(c) + "]"
                 self.split_node(node.id, "*", coefficient)
                 c += 1

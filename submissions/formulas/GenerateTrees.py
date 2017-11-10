@@ -5,9 +5,9 @@ from submissions.formulas.FormulaTree import *
 
 
 def generateSingleTree(Nsplit = 12):
-
+    verbose = False
     ft = FormulaTree()
-    n = 0
+    n = 1
 
     operations = ["*", "+", "-"]
 
@@ -17,7 +17,8 @@ def generateSingleTree(Nsplit = 12):
         op = operations[np.random.random_integers(0, 2)]
         while(split == False):
             i = np.random.random_integers(0, maxnode - 1)
-            print("request splitting node : ", i)
+            if(verbose):
+                print("request splitting node : ", i)
             split = ft.split_node(i, op)
         n += 1
 

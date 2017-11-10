@@ -89,7 +89,8 @@ class ClassifierXGB(BaseEstimator):
         return pred
 
 
-Classifier = ClassifierSimpleTree
+Classifier = ClassifierRandomForest
+#Classifier = ClassifierSimpleTree
 #Classifier = ClassifierXGB
 
 # class Classifier(ClassifierSimpleTree):

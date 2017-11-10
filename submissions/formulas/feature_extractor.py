@@ -1,9 +1,10 @@
 import numpy as np
-from submissions.formulas.formulate import formulate
+from submissions.formulas.GenerateTrees import generateSingleTree
 
 
 class FeatureExtractor():
     def __init__(self):
+        self.formula = generateSingleTree(5)
         pass
 
     def fit(self, X_df, y):
@@ -16,10 +17,7 @@ class FeatureExtractor():
         X = X_df.values
 
 # add column:
-
-#       formula = formulate()
-        formula = "X[:, 3] * X[:, 5]"
-        XF = eval(formula)
+        XF = eval(self.formula)
         X_new = np.concatenate((X, XF.reshape(-1, 1)), axis=1)
 
 # remove column:

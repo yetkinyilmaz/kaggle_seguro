@@ -1,3 +1,4 @@
+import pandas as pd
 import numpy as np
 
 from scipy.optimize import minimize
@@ -5,8 +6,11 @@ from scipy.optimize import minimize
 from submissions.formulas.GenerateTrees import *
 
 
-tree = generateSingleTree(2)
-dataset
+formula = generateSingleTree(2)
+train_filename = 'kaggle_data/train.csv'
+data = pd.read_csv(train_filename)
+X = data.drop(['target'], axis=1).values
+y = data[["target"]].values
 
 def coefficient_score(x):
 

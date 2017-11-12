@@ -27,7 +27,9 @@ class FormulaTree:
     def __init__(self):
         self.verbose = False
         self.nodes = np.array([])
+        self.npar = 0
         self.add_node(0, "", 1)
+        self.root = 0
 
     def add_node(self, a, var="", nvar=5):
         if(var == ""):
@@ -37,10 +39,12 @@ class FormulaTree:
         if(self.verbose):
             print("adding node : ", i)
         self.nodes = np.append(self.nodes, Node(i, var, a, 0, 0))
+        self.npar += 1
         return i
 
     def split_node(self, inode, op="+", var="", var0="preserve"):
-        print("splitting node : ", inode)
+        if(self.verbose):
+            print("splitting node : ", inode)
         node = self.nodes[inode]
         status = node.status
         split = False
@@ -57,9 +61,12 @@ class FormulaTree:
             node.object = op
             self.nodes[inode] = node
             split = True
+            self.npar += 1
         return split
 
-    def print_tree(self, inode=0):
+    def print_tree(self, inode=-1):
+        if(inode < 0):
+            inode = self.root
         if(self.verbose):
             print("printing tree starting from index ", inode)
         index = inode
@@ -79,9 +86,9 @@ class FormulaTree:
                     )
         return text
 
-    def add_coefficients(self, cname="C"):
+    def add_coefficients(self, cname="C", constant=True):
         add_brackets = True
-        c = 0
+        c = 0            
         for node in self.nodes:
             status = node.status
             if(status == 1):
@@ -90,3 +97,15 @@ class FormulaTree:
                     coefficient = cname + "[" + str(c) + "]"
                 self.split_node(node.id, "*", coefficient)
                 c += 1
+        if(constant):
+            coefficient = cname + "[" + str(c) + "]"
+            n = len(self.nodes)
+            self.add_node(n, "+")
+            self.add_node(n, coefficient)
+            self.nodes[0].a = n
+            self.nodes[n].b = 0
+            self.nodes[n].c = n + 1
+            self.root = n
+            self.npar += 1
+
+

@@ -4,10 +4,10 @@ import numpy as np
 from submissions.formulas.FormulaTree import *
 
 
-def generateSingleTree(Nsplit = 12):
+def generateSingleTree(Nsplit=12):
     verbose = False
     ft = FormulaTree()
-    n = 1
+    n = 0
 
     operations = ["*", "+", "-"]
 
@@ -26,7 +26,7 @@ def generateSingleTree(Nsplit = 12):
     tree = ft.print_tree()
     print("Adding feature : ", tree)
 
-    return tree
+    return ft
 
 
 def generatePopulation(N=10):

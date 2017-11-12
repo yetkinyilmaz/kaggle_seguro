@@ -42,6 +42,17 @@ class FormulaTree:
         self.npar += 1
         return i
 
+    def split_root(self, op="+", obj=""):
+        n = len(self.nodes)
+        self.add_node(n, op)
+        self.add_node(n, obj)
+        self.nodes[0].a = n
+        self.nodes[n].b = 0
+        self.nodes[n].c = n + 1
+        self.root = n
+        self.npar += 1
+        return self.root
+
     def split_node(self, inode, op="+", var="", var0="preserve"):
         if(self.verbose):
             print("splitting node : ", inode)
@@ -88,7 +99,7 @@ class FormulaTree:
 
     def add_coefficients(self, cname="C", constant=True):
         add_brackets = True
-        c = 0            
+        c = 0
         for node in self.nodes:
             status = node.status
             if(status == 1):
@@ -99,13 +110,6 @@ class FormulaTree:
                 c += 1
         if(constant):
             coefficient = cname + "[" + str(c) + "]"
-            n = len(self.nodes)
-            self.add_node(n, "+")
-            self.add_node(n, coefficient)
-            self.nodes[0].a = n
-            self.nodes[n].b = 0
-            self.nodes[n].c = n + 1
-            self.root = n
-            self.npar += 1
+            self.split_root("+", coefficient)
 
 

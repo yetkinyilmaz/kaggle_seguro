@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.optimize import minimize
 
 
 class Node:
@@ -30,6 +31,7 @@ class FormulaTree:
         self.npar = 0
         self.add_node(0, "", 1)
         self.root = 0
+        self.coefficients = np.array([])
 
     def add_node(self, a, var="", nvar=5):
         if(var == ""):
@@ -112,5 +114,29 @@ class FormulaTree:
         if(constant):
             coefficient = cname + "[" + str(c) + "]"
             self.split_root("+", coefficient)
+
+    def input_data(self, X, y):
+        self.X = X
+        self.y = y
+
+    def coefficient_error(self, c):
+        C = c
+        X = self.X
+        y = self.y
+        XF = eval(self.print_tree())
+        e = y**2 - XF**2
+        return np.sum(e)
+
+    def fit_coefficients(self, X, y):
+        self.input_data(X, y)
+#        c0 = np.full(self.npar, 0.)
+        c0 = np.array(range(0, self.npar))
+
+        res = minimize(self.coefficient_error, c0)
+        print(res)
+        if(res.success):
+            self.coefficients = res.x
+
+
 
 

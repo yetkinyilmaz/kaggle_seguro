@@ -28,7 +28,7 @@ class FormulaTree:
     def __init__(self):
         self.verbose = False
         self.nodes = np.array([])
-        self.npar = 0
+        self.nleaf = 0
         self.add_node(0, "", 1)
         self.root = 0
         self.coefficients = np.array([])
@@ -59,15 +59,15 @@ class FormulaTree:
                     )
         return text
 
-    def add_node(self, a, var="", nvar=5):
+    def add_node(self, a, var="", nvar=3):
         if(var == ""):
-            var_id = np.random.random_integers(0, nvar)
+            var_id = np.random.random_integers(20, 20 + nvar)
             var = "X[:," + str(var_id) + "]"
         i = len(self.nodes)
         if(self.verbose):
             print("adding node : ", i)
         self.nodes = np.append(self.nodes, Node(i, var, a, 0, 0))
-        self.npar += 1
+        self.nleaf += 1
         return i
 
     def split_node(self, inode, op="+", var="", var0="preserve"):
@@ -89,7 +89,7 @@ class FormulaTree:
             node.object = op
             self.nodes[inode] = node
             split = True
-            self.npar -= 1
+            self.nleaf -= 1
         return split
 
     def split_root(self, op="+", obj=""):
@@ -100,26 +100,31 @@ class FormulaTree:
         self.nodes[n].b = 0
         self.nodes[n].c = n + 1
         self.root = n
-        self.npar -= 1
+        self.nleaf -= 1
         return self.root
 
     def add_coefficients(self, cname="C", constant=True):
         add_brackets = True
         c = 0
+        self.npar = 0
         for node in self.nodes:
             status = node.status
-            if(status == 1):
+            parent = self.nodes[node.a]
+            if(status == 1 and
+                not ((parent.object == "*") & (parent.c == node.id))):
                 coefficient = cname + str(c)
                 if(add_brackets):
                     coefficient = cname + "[" + str(c) + "]"
                 self.split_node(node.id, "*", coefficient)
-                self.npar -= 1
+                self.nleaf -= 1
+                self.npar += 1
                 c += 1
         if(constant):
             coefficient = cname + "[" + str(c) + "]"
             self.split_root("+", coefficient)
+            self.npar += 1
 
-    def coefficient_error(self, c):
+    def coefficient_target_error(self, c):
         C = c
         X = self.X
         y = self.y
@@ -128,32 +133,61 @@ class FormulaTree:
         e = y**2 - XF**2
         return np.sum(e)
 
+    def coefficient_imbalance(self, c):
+        C = c
+        X = self.X
+        print(C)
+        DC = np.zeros(self.npar)
+        XF = eval(self.print_tree())
+        print("XF : ", XF)
+        e = 0
+        norm = np.sum(XF**2)
+        if(norm > 0):
+            for i in range(0, self.npar):
+                C = c
+                C[i] = 0
+                XC0 = eval(self.print_tree())
+                print("c : ", c)
+                print("C : ", C)
+                print("formula : ", self.print_tree())
+  #              print("XC0 : ", XC0)
+                DC[i] = np.sum((XC0 - XF)**2) / norm
+                e += DC[i]**2
+                for j in range(0, i):
+                    e -= np.abs(DC[i] * DC[j])
+        else:
+            e = 1000000000000000.
+        print("error : ", e)
+        return np.sum(e)
+
     def fit_coefficients(self, X, y):
         self.input_data(X, y)
-        c0 = np.full(self.npar, 4.5)
+        c0 = np.full(self.npar, 0.2)
 #        c0 = np.array(range(0, self.npar))
 #        cons = ({'type': 'ineq', 'fun': lambda x: x[0] - 2 * x[1] + 2},
 #                {'type': 'ineq', 'fun': lambda x: -x[0] - 2 * x[1] + 6},
 #                {'type': 'ineq', 'fun': lambda x: -x[0] + 2 * x[1] + 2})
         cons = ({})
-        bnds = [[-10., 10.]] * self.npar
+        bnds = [[-10, 10.]] * self.npar
         print(bnds)
- 
-#        res = minimize(fun=self.coefficient_error, x0=c0,
-#                       method='Newton-CG', bounds=bnds,
-#                       options={'xtol': 0.00001, 'eps': 0.001, 'maxiter': 1000000, 'jac': 0})
 
- #       res = minimize(fun=self.coefficient_error, x0=c0,
+#        res = minimize(fun=self.coefficient_imbalance, x0=c0)
+
+        res = minimize(fun=self.coefficient_imbalance, x0=c0,
+                       method='L-BFGS-B', bounds=bnds,
+                       options={'xtol': 0.001, 'eps': 0.01, 'maxiter': 1000000})
+
+ #       res = minimize(fun=self.coefficient_imbalance, x0=c0,
  #                      method='dogleg', bounds=bnds,
  #                      options={'gtol': 0.01, 'initial_trust_radius': 0.001, 'max_trust_radius': 0.01})
 
-#        res = minimize(fun=self.coefficient_error, x0=c0,
+#        res = minimize(fun=self.coefficient_imbalance, x0=c0,
 #                       method='SLSQP', bounds=bnds,
 #                       options={'ftol': 0.0001, 'eps': 0.00005, 'maxiter': 1000000})
 
-        res = minimize(fun=self.coefficient_error, x0=c0,
-                       method='BFGS', bounds=bnds,
-                       options={'gtol': 0.6, 'eps': 0.00000000000001, 'norm': 0.01, 'maxiter': 1000000})
+#        res = minimize(fun=self.coefficient_imbalance, x0=c0,
+#                       method='BFGS', bounds=bnds,
+#                       options={'gtol': 0.9, 'eps': 0.001, 'norm': 0.1, 'maxiter': 1000000})
 
         print(res)
         if(res.success):

@@ -5,7 +5,7 @@ from submissions.formulas.GenerateTrees import generateSingleTree
 class FeatureExtractor():
     def __init__(self):
         self.tree = generateSingleTree(2)
-        self.n_fit = 10000
+        self.n_fit = 100
         pass
 
     def remove_column(self, X, removed_column=0):

@@ -4,7 +4,7 @@ from submissions.formulas.GenerateTrees import generateSingleTree
 
 class FeatureExtractor():
     def __init__(self):
-        self.tree = generateSingleTree(5)
+        self.tree = generateSingleTree(2)
         self.n_fit = 10000
         pass
 

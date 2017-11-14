@@ -130,26 +130,30 @@ class FormulaTree:
 
     def fit_coefficients(self, X, y):
         self.input_data(X, y)
-        c0 = np.full(self.npar, 0.5)
+        c0 = np.full(self.npar, 4.5)
 #        c0 = np.array(range(0, self.npar))
 #        cons = ({'type': 'ineq', 'fun': lambda x: x[0] - 2 * x[1] + 2},
 #                {'type': 'ineq', 'fun': lambda x: -x[0] - 2 * x[1] + 6},
 #                {'type': 'ineq', 'fun': lambda x: -x[0] + 2 * x[1] + 2})
         cons = ({})
-        bnds = [[-5., 5.]] * self.npar
+        bnds = [[-10., 10.]] * self.npar
         print(bnds)
  
- #       res = minimize(fun=self.coefficient_error, x0=c0,
- #                      method='TNC', bounds=bnds,
- #                      options={'gtol': 0.0000001, 'eps': 0.000001, 'stepmx': 0.01})
+#        res = minimize(fun=self.coefficient_error, x0=c0,
+#                       method='Newton-CG', bounds=bnds,
+#                       options={'xtol': 0.00001, 'eps': 0.001, 'maxiter': 1000000, 'jac': 0})
 
  #       res = minimize(fun=self.coefficient_error, x0=c0,
  #                      method='dogleg', bounds=bnds,
  #                      options={'gtol': 0.01, 'initial_trust_radius': 0.001, 'max_trust_radius': 0.01})
 
+#        res = minimize(fun=self.coefficient_error, x0=c0,
+#                       method='SLSQP', bounds=bnds,
+#                       options={'ftol': 0.0001, 'eps': 0.00005, 'maxiter': 1000000})
+
         res = minimize(fun=self.coefficient_error, x0=c0,
-                       method='COBYLA', bounds=bnds,
-                       options={'gtol': 0.3, 'rhobeg': 0.1, 'maxiter': 1000000})
+                       method='BFGS', bounds=bnds,
+                       options={'gtol': 0.6, 'eps': 0.00000000000001, 'norm': 0.01, 'maxiter': 1000000})
 
         print(res)
         if(res.success):

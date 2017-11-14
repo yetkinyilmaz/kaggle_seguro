@@ -50,7 +50,7 @@ class FormulaTree:
         self.nodes[n].b = 0
         self.nodes[n].c = n + 1
         self.root = n
-        self.npar += 1
+        self.npar -= 1
         return self.root
 
     def split_node(self, inode, op="+", var="", var0="preserve"):
@@ -72,7 +72,7 @@ class FormulaTree:
             node.object = op
             self.nodes[inode] = node
             split = True
-            self.npar += 1
+            self.npar -= 1
         return split
 
     def print_tree(self, inode=-1):
@@ -107,6 +107,7 @@ class FormulaTree:
                 if(add_brackets):
                     coefficient = cname + "[" + str(c) + "]"
                 self.split_node(node.id, "*", coefficient)
+                self.npar -= 1
                 c += 1
         if(constant):
             coefficient = cname + "[" + str(c) + "]"

@@ -4,7 +4,7 @@ from submissions.formulas.GenerateTrees import generateSingleTree
 
 class FeatureExtractor():
     def __init__(self):
-        self.tree = generateSingleTree(22)
+        self.tree = generateSingleTree(18)
         self.tree.set_classifier()
         self.n_fit = 200000000
         pass
@@ -25,6 +25,9 @@ class FeatureExtractor():
         X = self.remove_column(X_df.values, 0)
 
 # add column:
+        print("Coefficients : ", self.tree.coefficients)
+        print("Formula : ", self.tree.print_tree())
+
         C = self.tree.coefficients
         XF = eval(self.tree.print_tree())
         X_new = np.concatenate((X, XF.reshape(-1, 1)), axis=1)

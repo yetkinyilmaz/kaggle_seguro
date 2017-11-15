@@ -71,7 +71,7 @@ class FormulaTree:
                     )
         return text
 
-    def add_node(self, a, var="", nvar=3):
+    def add_node(self, a, var="", nvar=30):
         if(var == ""):
             var_id = np.random.random_integers(20, 20 + nvar)
             var = "X[:," + str(var_id) + "]"
@@ -152,22 +152,23 @@ class FormulaTree:
         return np.sum(e)
 
     def coefficient_imbalance(self, c):
+        nc = len(c)
         C = self.format_coefficients(c)
         X = self.X
-        print(C)
-        DC = np.zeros(self.npar)
+        print(c)
+        DC = np.zeros(nc)
         XF = eval(self.print_tree())
-        print("XF : ", XF)
+#        print("XF : ", XF)
         e = 0
         norm = np.sum(XF**2)
         if(norm > 0):
-            for i in range(0, self.npar):
-                C = c
+            for i in range(0, nc):
+                C = self.format_coefficients(c)
                 C[i] = 0
                 XC0 = eval(self.print_tree())
-                print("c : ", c)
-                print("C : ", C)
-                print("formula : ", self.print_tree())
+#                print("c : ", c)
+#                print("C : ", C)
+#                print("formula : ", self.print_tree())
   #              print("XC0 : ", XC0)
                 DC[i] = np.sum((XC0 - XF)**2) / norm
                 e += DC[i]**2
@@ -196,7 +197,7 @@ class FormulaTree:
         if(self.npar > 2):
             self.input_data(X, y)
             nc = self.npar-2
-            c0 = np.full(nc, -100.002)
+    #        c0 = np.full(nc, -100.002)
             c0 = 5. * (2. * np.random.random(nc) - 1.)
     #        c0 = np.array(range(0, self.npar))
     #        cons = ({'type': 'ineq', 'fun': lambda x: x[0] - 2 * x[1] + 2},
@@ -217,7 +218,7 @@ class FormulaTree:
             res = minimize(fun=self.classifier_error, x0=c0,
                            method='L-BFGS-B',
 #                           bounds=bnds,
-                           options={'xtol': 0.001, 'eps': 0.1, 'maxiter': 1000000})
+                           options={'xtol': 0.001, 'eps': 0.2, 'maxiter': 1000000})
 
 
     #        res = minimize(fun=self.classifier_error, x0=c0,
@@ -229,16 +230,15 @@ class FormulaTree:
 #                           bounds=bnds,
 #                           options={'gtol': 0.9, 'eps': 0.5, 'norm': 10.1, 'maxiter': 1000000})
 
-    #        res = minimize(fun=self.classifier_error, x0=c0,
-    #                       method='trust-krylov', bounds=bnds,
-    #                       options={'gtol': 0.9, 'initial_trust_radius': 10.9, 'max_trust_radius': 0.1, 'eta': 10.1, 'maxiter': 1000000})
-
 
             print(res)
             if(res.success):
                 self.coefficients = self.format_coefficients(res.x)
-
+            else:
+                self.coefficients = self.format_coefficients(c0)
         else:
-            self.coefficients = np.array([1.,1.])
+            self.coefficients = np.array([1., 1.])
 
+        print("Initial coefficients: ", self.format_coefficients(c0))
+        print("Final   coefficients: ", self.coefficients)
 

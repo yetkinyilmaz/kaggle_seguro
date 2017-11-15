@@ -1,4 +1,5 @@
 import numpy as np
+from sklearn.tree import DecisionTreeClassifier
 from scipy.optimize import minimize
 
 
@@ -33,9 +34,20 @@ class FormulaTree:
         self.root = 0
         self.coefficients = np.array([])
 
+    def set_classifier(self):
+        self.clf = DecisionTreeClassifier(
+            max_depth=1,
+            max_features=1,
+            max_leaf_nodes=2
+        )
+
     def input_data(self, X, y):
         self.X = X
         self.y = y
+
+    def fit_classifier(self, X, y):
+        self.clf.fit(X, y)
+        return self.clf.score(X, y)
 
     def print_tree(self, inode=-1):
         if(inode < 0):
@@ -111,7 +123,7 @@ class FormulaTree:
             status = node.status
             parent = self.nodes[node.a]
             if(status == 1 and
-                not ((parent.object == "*") & (parent.c == node.id))):
+                    not ((parent.object == "*") & (parent.c == node.id))):
                 coefficient = cname + str(c)
                 if(add_brackets):
                     coefficient = cname + "[" + str(c) + "]"
@@ -124,8 +136,14 @@ class FormulaTree:
             self.split_root("+", coefficient)
             self.npar += 1
 
+
+    def format_coefficients(self, c):
+        c = np.insert(c, 1, 1.)
+        c = np.insert(c, self.npar, 0.)
+        return c
+
     def coefficient_target_error(self, c):
-        C = c
+        C = self.format_coefficients(c)
         X = self.X
         y = self.y
         print(C)
@@ -134,7 +152,7 @@ class FormulaTree:
         return np.sum(e)
 
     def coefficient_imbalance(self, c):
-        C = c
+        C = self.format_coefficients(c)
         X = self.X
         print(C)
         DC = np.zeros(self.npar)
@@ -160,35 +178,62 @@ class FormulaTree:
         print("error : ", e)
         return np.sum(e)
 
+    def classifier_error(self, c):
+        C = self.format_coefficients(c)
+        X = self.X
+        y = self.y
+
+        print(C)
+        XF = eval(self.print_tree()).reshape(-1, 1)
+        score = self.fit_classifier(XF, y)
+        error = 1. - score
+        print("classifier error : ", error)
+        return error
+
+
     def fit_coefficients(self, X, y):
-        self.input_data(X, y)
-        c0 = np.full(self.npar, 0.2)
-#        c0 = np.array(range(0, self.npar))
-#        cons = ({'type': 'ineq', 'fun': lambda x: x[0] - 2 * x[1] + 2},
-#                {'type': 'ineq', 'fun': lambda x: -x[0] - 2 * x[1] + 6},
-#                {'type': 'ineq', 'fun': lambda x: -x[0] + 2 * x[1] + 2})
-        cons = ({})
-        bnds = [[-10, 10.]] * self.npar
-        print(bnds)
 
-#        res = minimize(fun=self.coefficient_imbalance, x0=c0)
+        if(self.npar > 2):
+            self.input_data(X, y)
+            c0 = np.full(self.npar-2, 1.05)
+    #        c0 = np.array(range(0, self.npar))
+    #        cons = ({'type': 'ineq', 'fun': lambda x: x[0] - 2 * x[1] + 2},
+    #                {'type': 'ineq', 'fun': lambda x: -x[0] - 2 * x[1] + 6},
+    #                {'type': 'ineq', 'fun': lambda x: -x[0] + 2 * x[1] + 2})
+            cons = ({})
+            bnds = [[-10, 10.]] * self.npar
+            print(bnds)
 
-        res = minimize(fun=self.coefficient_imbalance, x0=c0,
-                       method='L-BFGS-B', bounds=bnds,
-                       options={'xtol': 0.001, 'eps': 0.01, 'maxiter': 1000000})
+    #        res = minimize(fun=self.classifier_error, x0=c0)
 
- #       res = minimize(fun=self.coefficient_imbalance, x0=c0,
- #                      method='dogleg', bounds=bnds,
- #                      options={'gtol': 0.01, 'initial_trust_radius': 0.001, 'max_trust_radius': 0.01})
 
-#        res = minimize(fun=self.coefficient_imbalance, x0=c0,
-#                       method='SLSQP', bounds=bnds,
-#                       options={'ftol': 0.0001, 'eps': 0.00005, 'maxiter': 1000000})
+            res = minimize(fun=self.classifier_error, x0=c0,
+                           method='L-BFGS-B', bounds=bnds,
+                           options={'ftol': 0.000000001, 'gtol': 0.0000000001, 'eps': 0.5, 'maxcor': 5, 'maxiter': 1000000})
 
-#        res = minimize(fun=self.coefficient_imbalance, x0=c0,
-#                       method='BFGS', bounds=bnds,
-#                       options={'gtol': 0.9, 'eps': 0.001, 'norm': 0.1, 'maxiter': 1000000})
 
-        print(res)
-        if(res.success):
-            self.coefficients = res.x
+    #        res = minimize(fun=self.coefficient_imbalance, x0=c0,
+    #                       method='L-BFGS-B', bounds=bnds,
+    #                       options={'xtol': 0.001, 'eps': 0.01, 'maxiter': 1000000})
+
+     #       res = minimize(fun=self.coefficient_imbalance, x0=c0,
+     #                      method='dogleg', bounds=bnds,
+     #                      options={'gtol': 0.01, 'initial_trust_radius': 0.001, 'max_trust_radius': 0.01})
+
+    #        res = minimize(fun=self.coefficient_imbalance, x0=c0,
+    #                       method='SLSQP', bounds=bnds,
+    #                       options={'ftol': 0.0001, 'eps': 0.00005, 'maxiter': 1000000})
+
+    #        res = minimize(fun=self.coefficient_imbalance, x0=c0,
+    #                       method='BFGS', bounds=bnds,
+    #                       options={'gtol': 0.9, 'eps': 0.001, 'norm': 0.1, 'maxiter': 1000000})
+
+            print(res)
+            if(res.success):
+                self.coefficients = self.format_coefficients(res.x)
+
+        else:
+            self.coefficients = np.array([1.,1,])
+
+
+            

@@ -138,8 +138,8 @@ class FormulaTree:
 
 
     def format_coefficients(self, c):
-        c = np.insert(c, 1, 1.)
-        c = np.insert(c, self.npar, 0.)
+        c = np.insert(c, 0, 1.)
+        c = np.insert(c, self.npar-1, 0.)
         return c
 
     def coefficient_target_error(self, c):
@@ -195,45 +195,50 @@ class FormulaTree:
 
         if(self.npar > 2):
             self.input_data(X, y)
-            c0 = np.full(self.npar-2, 1.05)
+            nc = self.npar-2
+            c0 = np.full(nc, -100.002)
+            c0 = 5. * (2. * np.random.random(nc) - 1.)
     #        c0 = np.array(range(0, self.npar))
     #        cons = ({'type': 'ineq', 'fun': lambda x: x[0] - 2 * x[1] + 2},
     #                {'type': 'ineq', 'fun': lambda x: -x[0] - 2 * x[1] + 6},
     #                {'type': 'ineq', 'fun': lambda x: -x[0] + 2 * x[1] + 2})
             cons = ({})
-            bnds = [[-10, 10.]] * self.npar
+            bnds = [[-1000, 1000.]] * nc
             print(bnds)
 
     #        res = minimize(fun=self.classifier_error, x0=c0)
 
 
-            res = minimize(fun=self.classifier_error, x0=c0,
-                           method='L-BFGS-B', bounds=bnds,
-                           options={'ftol': 0.000000001, 'gtol': 0.0000000001, 'eps': 0.5, 'maxcor': 5, 'maxiter': 1000000})
-
-
-    #        res = minimize(fun=self.coefficient_imbalance, x0=c0,
+    #        res = minimize(fun=self.classifier_error, x0=c0,
     #                       method='L-BFGS-B', bounds=bnds,
-    #                       options={'xtol': 0.001, 'eps': 0.01, 'maxiter': 1000000})
+    #                       options={'ftol': 0.000000001, 'gtol': 0.0000000001, 'eps': 1.003, 'maxcor': 1125, 'maxiter': 1000000})
 
-     #       res = minimize(fun=self.coefficient_imbalance, x0=c0,
-     #                      method='dogleg', bounds=bnds,
-     #                      options={'gtol': 0.01, 'initial_trust_radius': 0.001, 'max_trust_radius': 0.01})
 
-    #        res = minimize(fun=self.coefficient_imbalance, x0=c0,
+            res = minimize(fun=self.classifier_error, x0=c0,
+                           method='L-BFGS-B',
+#                           bounds=bnds,
+                           options={'xtol': 0.001, 'eps': 0.1, 'maxiter': 1000000})
+
+
+    #        res = minimize(fun=self.classifier_error, x0=c0,
     #                       method='SLSQP', bounds=bnds,
-    #                       options={'ftol': 0.0001, 'eps': 0.00005, 'maxiter': 1000000})
+    #                       options={'ftol': 0.00001, 'eps': 1110.05, 'maxiter': 1000000})
 
-    #        res = minimize(fun=self.coefficient_imbalance, x0=c0,
-    #                       method='BFGS', bounds=bnds,
-    #                       options={'gtol': 0.9, 'eps': 0.001, 'norm': 0.1, 'maxiter': 1000000})
+#            res = minimize(fun=self.classifier_error, x0=c0,
+#                           method='BFGS',
+#                           bounds=bnds,
+#                           options={'gtol': 0.9, 'eps': 0.5, 'norm': 10.1, 'maxiter': 1000000})
+
+    #        res = minimize(fun=self.classifier_error, x0=c0,
+    #                       method='trust-krylov', bounds=bnds,
+    #                       options={'gtol': 0.9, 'initial_trust_radius': 10.9, 'max_trust_radius': 0.1, 'eta': 10.1, 'maxiter': 1000000})
+
 
             print(res)
             if(res.success):
                 self.coefficients = self.format_coefficients(res.x)
 
         else:
-            self.coefficients = np.array([1.,1,])
+            self.coefficients = np.array([1.,1.])
 
 
-            

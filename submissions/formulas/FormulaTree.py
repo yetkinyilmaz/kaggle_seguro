@@ -207,8 +207,8 @@ class FormulaTree:
             bnds = [[-1000, 1000.]] * nc
             print(bnds)
 
+# Fitting coefficients
     #        res = minimize(fun=self.classifier_error, x0=c0)
-
 
     #        res = minimize(fun=self.classifier_error, x0=c0,
     #                       method='L-BFGS-B', bounds=bnds,

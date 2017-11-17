@@ -31,3 +31,9 @@ submissions/*/training_output
 *~
 
 notebook
+
+.*
+*/.*
+
+.DS_Store
+

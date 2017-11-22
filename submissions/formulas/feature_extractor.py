@@ -17,7 +17,7 @@ class FeatureExtractor():
         print("I'm feature extractor and I'm fitting...")
         X = self.remove_column(X_df.head(self.n_fit).values, 0)
         y = y[0:self.n_fit]
-        self.tree.fit_coefficients(X, y)
+#        self.tree.fit_coefficients(X, y)
 
     def transform(self, X_df):
         print("I'm transforming.")

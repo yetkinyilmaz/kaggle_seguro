@@ -14,11 +14,12 @@ class Node:
         self.status = 1
         if((obj == "=") | (obj == "+") | (obj == "*")):
             self.status = 2
-        # 0 : Nothing
-        # 1 : End node
-        # 2 : Branching operation
-        # 3 : Coefficient
-        # 4 : Solid
+        # -1 : Dead
+        #  0 : Nothing
+        #  1 : End node
+        #  2 : Branching operation
+        #  3 : Coefficient
+        #  4 : Solid
 
         else:
             self.b = 0
@@ -28,11 +29,13 @@ class Node:
 class FormulaTree:
     def __init__(self):
         self.verbose = False
-        self.nodes = np.array([])
         self.nleaf = 0
-        self.add_node(0, "", 1)
         self.root = 0
         self.coefficients = np.array([])
+        self.variables = np.array(range(20, 30))
+        self.operations = ["*", "+", "-"]
+        self.nodes = np.array([])
+        self.add_node(0, "")
 
     def set_classifier(self):
         self.clf = DecisionTreeClassifier(
@@ -71,9 +74,11 @@ class FormulaTree:
                     )
         return text
 
-    def add_node(self, a, var="", nvar=30):
+    def add_node(self, a, var=""):
         if(var == ""):
-            var_id = np.random.random_integers(20, 20 + nvar)
+            var_id = self.variables[
+                np.random.random_integers(0, len(self.variables) - 1)
+            ]
             var = "X[:," + str(var_id) + "]"
         i = len(self.nodes)
         if(self.verbose):
@@ -82,7 +87,12 @@ class FormulaTree:
         self.nleaf += 1
         return i
 
-    def split_node(self, inode, op="+", var="", var0="preserve"):
+    def split_node(self, inode, op="", var="", var0="preserve"):
+        if(op == ""):
+            op = self.operations[
+                np.random.random_integers(0, len(self.operations) - 1)
+            ]
+
         if(self.verbose):
             print("splitting node : ", inode)
         node = self.nodes[inode]
@@ -115,6 +125,82 @@ class FormulaTree:
         self.nleaf -= 1
         return self.root
 
+    def replace_node(self, inode, obj=""):
+        node = self.nodes[inode]
+        if(obj == ""):
+            if(node.status == 1):
+                var_id = self.variables[
+                    np.random.random_integers(0, len(self.variables) - 1)
+                ]
+                var = "X[:," + str(var_id) + "]"
+                obj = var
+            else:
+                op = self.operations[
+                    np.random.random_integers(0, len(self.operations) - 1)
+                ]
+                obj = op
+        node.object = obj
+        self.nodes[inode] = node
+
+    def kill_node(self, inode):
+        node = self.nodes[inode]
+        status = node.status
+        self.nodes[inode].status = -1
+        if(status == 2):
+            self.kill_node(node.b)
+            self.kill_node(node.c)
+
+    def clean_dead(self):
+        for i in range(len(self.nodes)-1, -1, -1):
+            status = self.nodes[i].status
+            if(status == -1):
+                self.nodes = np.delete(self.nodes, i)
+
+    def truncate_node(self, inode, obj=""):
+        if(inode < 0):
+            inode = self.root
+        if(self.verbose):
+            print("truncating tree starting from index ", inode)
+        node = self.nodes[inode]
+        self.kill_node(inode)
+        node.object = obj
+        node.status = 1
+        self.nodes[inode] = node
+        self.clean_dead()
+        self.reset_ids()
+        return inode
+
+    def reconnect_node(self, inode, subtree):
+        node = self.nodes[inode]
+
+    def get_subtree(self, inode):
+        subtree = FormulaTree()
+        return subtree
+
+
+    def reset_ids(self, offset=0):
+        new_ids = np.array(range(offset, offset + len(self.nodes)))
+        ids = np.array([])
+        i = 0
+        for node in self.nodes:
+            ids = np.append(ids, node.id)
+            self.nodes[i].id = i
+            i += 1
+
+        i = 0
+        for node in self.nodes:
+            a = new_ids[np.where(ids == self.nodes[i].a)][0]
+            b = new_ids[np.where(ids == self.nodes[i].b)][0]
+            c = new_ids[np.where(ids == self.nodes[i].c)][0]
+
+            self.nodes[i].a = a + offset
+            self.nodes[i].b = b + offset
+            self.nodes[i].c = c + offset
+            self.nodes[i].id += offset
+            i += 1
+
+
+
     def add_coefficients(self, cname="C", constant=True):
         add_brackets = True
         c = 0
@@ -135,11 +221,17 @@ class FormulaTree:
             coefficient = cname + "[" + str(c) + "]"
             self.split_root("+", coefficient)
             self.npar += 1
+        self.coefficients = np.full(self.npar, 1.)
 
+
+
+'''
+Coefficient fitting related stuff. Removed for now.
 
     def format_coefficients(self, c):
+        # add back the coeficients that were trivial in the fitting 
         c = np.insert(c, 0, 1.)
-        c = np.insert(c, self.npar-1, 0.)
+        c = np.insert(c, self.npar - 1, 0.)
         return c
 
     def coefficient_target_error(self, c):
@@ -191,19 +283,14 @@ class FormulaTree:
         print("classifier error : ", error)
         return error
 
-
     def fit_coefficients(self, X, y):
 
         if(self.npar > 2):
             self.input_data(X, y)
-            nc = self.npar-2
+            nc = self.npar - 2
     #        c0 = np.full(nc, -100.002)
             c0 = 5. * (2. * np.random.random(nc) - 1.)
-    #        c0 = np.array(range(0, self.npar))
-    #        cons = ({'type': 'ineq', 'fun': lambda x: x[0] - 2 * x[1] + 2},
-    #                {'type': 'ineq', 'fun': lambda x: -x[0] - 2 * x[1] + 6},
-    #                {'type': 'ineq', 'fun': lambda x: -x[0] + 2 * x[1] + 2})
-            cons = ({})
+
             bnds = [[-1000, 1000.]] * nc
             print(bnds)
 
@@ -214,12 +301,10 @@ class FormulaTree:
     #                       method='L-BFGS-B', bounds=bnds,
     #                       options={'ftol': 0.000000001, 'gtol': 0.0000000001, 'eps': 1.003, 'maxcor': 1125, 'maxiter': 1000000})
 
-
             res = minimize(fun=self.classifier_error, x0=c0,
                            method='L-BFGS-B',
-#                           bounds=bnds,
+                           #                           bounds=bnds,
                            options={'xtol': 0.001, 'eps': 0.2, 'maxiter': 1000000})
-
 
     #        res = minimize(fun=self.classifier_error, x0=c0,
     #                       method='SLSQP', bounds=bnds,
@@ -229,7 +314,6 @@ class FormulaTree:
 #                           method='BFGS',
 #                           bounds=bnds,
 #                           options={'gtol': 0.9, 'eps': 0.5, 'norm': 10.1, 'maxiter': 1000000})
-
 
             print(res)
             if(res.success):
@@ -241,4 +325,4 @@ class FormulaTree:
 
         print("Initial coefficients: ", self.format_coefficients(c0))
         print("Final   coefficients: ", self.coefficients)
-
+'''

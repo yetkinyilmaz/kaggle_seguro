@@ -14,12 +14,11 @@ def generateSingleTree(Nsplit=12):
     while(n < Nsplit):
         maxnode = len(ft.nodes)
         split = False
-        op = operations[np.random.random_integers(0, 2)]
         while(split == False):
             i = np.random.random_integers(0, maxnode - 1)
             if(verbose):
                 print("request splitting node : ", i)
-            split = ft.split_node(i, op)
+            split = ft.split_node(i)
         n += 1
 
     ft.add_coefficients()

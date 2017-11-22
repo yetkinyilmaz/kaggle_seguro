@@ -4,7 +4,7 @@ from scipy.optimize import minimize
 
 
 class Node:
-    def __init__(self, id, obj, a, b=0, c=0):
+    def __init__(self, id, obj, a, b=-1, c=-1):
         # a -> b,  c
         self.id = id
         self.a = a
@@ -74,7 +74,7 @@ class FormulaTree:
                     )
         return text
 
-    def add_node(self, a, var=""):
+    def add_node(self, a=-1, var=""):
         if(var == ""):
             var_id = self.variables[
                 np.random.random_integers(0, len(self.variables) - 1)
@@ -83,7 +83,7 @@ class FormulaTree:
         i = len(self.nodes)
         if(self.verbose):
             print("adding node : ", i)
-        self.nodes = np.append(self.nodes, Node(i, var, a, 0, 0))
+        self.nodes = np.append(self.nodes, Node(i, var, a, -1, -1))
         self.nleaf += 1
         return i
 
@@ -116,10 +116,10 @@ class FormulaTree:
 
     def split_root(self, op="+", obj=""):
         n = len(self.nodes)
-        self.add_node(n, op)
+        self.add_node(-1, op)
         self.add_node(n, obj)
-        self.nodes[0].a = n
-        self.nodes[n].b = 0
+        self.nodes[self.root].a = n
+        self.nodes[n].b = self.root
         self.nodes[n].c = n + 1
         self.root = n
         self.nleaf -= 1
@@ -143,62 +143,83 @@ class FormulaTree:
         self.nodes[inode] = node
 
     def kill_node(self, inode):
-        node = self.nodes[inode]
-        status = node.status
+        print("Killing node : ", inode)
+        status = self.nodes[inode].status
         self.nodes[inode].status = -1
+        if(status == 1):
+            self.nleaf -= 1
         if(status == 2):
-            self.kill_node(node.b)
-            self.kill_node(node.c)
+            self.kill_node(self.nodes[inode].b)
+            self.kill_node(self.nodes[inode].c)
 
     def clean_dead(self):
-        for i in range(len(self.nodes)-1, -1, -1):
-            status = self.nodes[i].status
-            if(status == -1):
+        for i in range(len(self.nodes) - 1, -1, -1):
+            if(self.nodes[i].status == -1):
                 self.nodes = np.delete(self.nodes, i)
 
-    def truncate_node(self, inode, obj=""):
-        if(inode < 0):
-            inode = self.root
+    def truncate_node(self, inode, obj="END"):
+        if(inode == self.root):
+            "Truncating the whole tree"
         if(self.verbose):
             print("truncating tree starting from index ", inode)
-        node = self.nodes[inode]
         self.kill_node(inode)
-        node.object = obj
-        node.status = 1
-        self.nodes[inode] = node
-        self.clean_dead()
+        self.nleaf += 1
+        self.nodes[inode].object = obj
+        self.nodes[inode].status = 1
+        self.nodes[inode].b = -1
+        self.nodes[inode].c = -1
         self.reset_ids()
+        self.clean_dead()
         return inode
 
     def reconnect_node(self, inode, subtree):
         node = self.nodes[inode]
+        pass
 
     def get_subtree(self, inode):
         subtree = FormulaTree()
+        pass
         return subtree
 
-
     def reset_ids(self, offset=0):
-        new_ids = np.array(range(offset, offset + len(self.nodes)))
+        new_ids = np.array(range(0, len(self.nodes)))
         ids = np.array([])
-        i = 0
         for node in self.nodes:
-            ids = np.append(ids, node.id)
-            self.nodes[i].id = i
-            i += 1
+            if(node.status != -1):
+                ids = np.append(ids, int(node.id))
 
-        i = 0
-        for node in self.nodes:
-            a = new_ids[np.where(ids == self.nodes[i].a)][0]
-            b = new_ids[np.where(ids == self.nodes[i].b)][0]
-            c = new_ids[np.where(ids == self.nodes[i].c)][0]
+        print("ids     (", len(ids),") : ", ids)
+        print("new_ids (", len(new_ids), ") : ", new_ids)
 
-            self.nodes[i].a = a + offset
-            self.nodes[i].b = b + offset
-            self.nodes[i].c = c + offset
-            self.nodes[i].id += offset
-            i += 1
+        for i in range(0, len(self.nodes)):
+            if(self.nodes[i].status != -1):
 
+                print("node i : ", i)
+                print("a : ", self.nodes[i].a)
+                print("b : ", self.nodes[i].b)
+                print("c : ", self.nodes[i].c)
+
+                new_id, a, b, c = -1, -1, -1, -1
+                new_id = np.where(ids == self.nodes[i].id)[0][0] + offset
+                if(self.nodes[i].id != self.root):
+                    if(self.nodes[self.nodes[i].a].status != -1):
+                        a = np.where(ids == self.nodes[i].a)[0][0] + offset
+                else:
+                    self.root = new_id
+                if(self.nodes[i].status == 2):
+                    if(self.nodes[self.nodes[i].b].status != -1):
+                        b = np.where(ids == self.nodes[i].b)[0][0] + offset
+                    else:
+                        b = -1
+                    if(self.nodes[self.nodes[i].c].status != -1):
+                        c = np.where(ids == self.nodes[i].c)[0][0] + offset
+                    else:
+                        c = -1
+
+                self.nodes[i].a = a
+                self.nodes[i].b = b
+                self.nodes[i].c = c
+                self.nodes[i].id = new_id
 
 
     def add_coefficients(self, cname="C", constant=True):

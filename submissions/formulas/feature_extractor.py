@@ -26,10 +26,10 @@ class FeatureExtractor():
 
 # add column:
         print("Coefficients : ", self.tree.coefficients)
-        print("Formula : ", self.tree.print_tree())
+        print("Formula : ", self.tree.get_formula())
 
         C = self.tree.coefficients
-        XF = eval(self.tree.print_tree())
+        XF = eval(self.tree.get_formula())
         X_new = np.concatenate((X, XF.reshape(-1, 1)), axis=1)
 
 # remove non-trivial column:

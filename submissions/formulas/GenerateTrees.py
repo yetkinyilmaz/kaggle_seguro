@@ -22,7 +22,7 @@ def generateSingleTree(Nsplit=12):
         n += 1
 
     ft.add_coefficients()
-    tree = ft.print_tree()
+    tree = ft.get_formula()
     print("Adding feature : ", tree)
 
     return ft

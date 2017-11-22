@@ -1,4 +1,6 @@
 import numpy as np
+import pandas as pd
+
 from sklearn.tree import DecisionTreeClassifier
 from scipy.optimize import minimize
 
@@ -52,7 +54,7 @@ class FormulaTree:
         self.clf.fit(X, y)
         return self.clf.score(X, y)
 
-    def print_tree(self, inode=-1):
+    def get_formula(self, inode=-1):
         if(inode < 0):
             inode = self.root
         if(self.verbose):
@@ -67,9 +69,9 @@ class FormulaTree:
                 print(text)
         else:
             text = ("(" +
-                    self.print_tree(node.b) +
+                    self.get_formula(node.b) +
                     node.object +
-                    self.print_tree(node.c) +
+                    self.get_formula(node.c) +
                     ")"
                     )
         return text
@@ -239,6 +241,11 @@ class FormulaTree:
             self.split_root("+", coefficient)
             self.npar += 1
         self.coefficients = np.full(self.npar, 1.)
+
+
+    def get_dataframe():
+        df = pd.DataFrame()
+        return df
 
 
 

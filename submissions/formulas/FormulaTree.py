@@ -143,7 +143,8 @@ class FormulaTree:
         self.nodes[inode] = node
 
     def kill_node(self, inode):
-        print("Killing node : ", inode)
+        if(self.verbose):
+            print("Killing node : ", inode)
         status = self.nodes[inode].status
         self.nodes[inode].status = -1
         if(status == 1):
@@ -188,33 +189,28 @@ class FormulaTree:
             if(node.status != -1):
                 ids = np.append(ids, int(node.id))
 
-        print("ids     (", len(ids),") : ", ids)
-        print("new_ids (", len(new_ids), ") : ", new_ids)
+        if(self.verbose):
+            print("ids     (", len(ids),") : ", ids)
+            print("new_ids (", len(new_ids), ") : ", new_ids)
 
         for i in range(0, len(self.nodes)):
             if(self.nodes[i].status != -1):
 
-                print("node i : ", i)
-                print("a : ", self.nodes[i].a)
-                print("b : ", self.nodes[i].b)
-                print("c : ", self.nodes[i].c)
+                if(self.verbose):
+                    print("node i : ", i)
+                    print("a : ", self.nodes[i].a)
+                    print("b : ", self.nodes[i].b)
+                    print("c : ", self.nodes[i].c)
 
                 new_id, a, b, c = -1, -1, -1, -1
                 new_id = np.where(ids == self.nodes[i].id)[0][0] + offset
                 if(self.nodes[i].id != self.root):
-                    if(self.nodes[self.nodes[i].a].status != -1):
-                        a = np.where(ids == self.nodes[i].a)[0][0] + offset
+                    a = np.where(ids == self.nodes[i].a)[0][0] + offset
                 else:
                     self.root = new_id
                 if(self.nodes[i].status == 2):
-                    if(self.nodes[self.nodes[i].b].status != -1):
-                        b = np.where(ids == self.nodes[i].b)[0][0] + offset
-                    else:
-                        b = -1
-                    if(self.nodes[self.nodes[i].c].status != -1):
-                        c = np.where(ids == self.nodes[i].c)[0][0] + offset
-                    else:
-                        c = -1
+                    b = np.where(ids == self.nodes[i].b)[0][0] + offset
+                    c = np.where(ids == self.nodes[i].c)[0][0] + offset
 
                 self.nodes[i].a = a
                 self.nodes[i].b = b

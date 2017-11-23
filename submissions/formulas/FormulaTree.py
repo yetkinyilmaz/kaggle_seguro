@@ -243,11 +243,22 @@ class FormulaTree:
         self.coefficients = np.full(self.npar, 1.)
 
 
-    def get_dataframe():
-        df = pd.DataFrame()
+    def get_dataframe(self):
+        df = pd.DataFrame({'id':[],'a':[],'b':[],'c':[],'object':[],'status':[],'value':[],'weight':[]})
+        ic = 0
+        for node in self.nodes:
+            value = 0
+            if("C" in node.object):
+                value = self.coefficients[ic]
+                ic += 1
+            df = df.append({'id':node.id, 'a':node.a, 'b':node.b, 'c':node.c,
+                'object':node.object, 'status':node.status,
+                'value':value, 'weight':0}, ignore_index=True)
         return df
 
-
+    def write_tree(self):
+        df = self.get_dataframe()
+        df.to_csv("tree.csv")
 
 '''
 Coefficient fitting related stuff. Removed for now.

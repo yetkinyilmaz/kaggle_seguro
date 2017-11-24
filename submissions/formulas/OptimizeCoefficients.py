@@ -3,21 +3,61 @@ import numpy as np
 
 from scipy.optimize import minimize
 
-from submissions.formulas.GenerateTrees import *
+# Coefficient fitting related stuff.
+
+def format_coefficients(tree, c):
+    # add back the coeficients that were trivial in the fitting
+    c = np.insert(c, 0, 1.)
+    c = np.insert(c, tree.npar - 1, 0.)
+    return c
+
+def coefficient_target_error(tree, c):
+    C = format_coefficients(tree, c)
+    X = tree.X
+    y = tree.y
+    print(C)
+    XF = eval(tree.get_formula())
+    e = y**2 - XF**2
+    return np.sum(e)
+
+def coefficient_imbalance(tree, c):
+    nc = len(c)
+    C = format_coefficients(tree, c)
+    X = tree.X
+    print(c)
+    DC = np.zeros(nc)
+    XF = eval(self.get_formula())
+#        print("XF : ", XF)
+    e = 0
+    norm = np.sum(XF**2)
+    if(norm > 0):
+        for i in range(0, nc):
+            C = format_coefficients(tree, c)
+            C[i] = 0
+            XC0 = eval(tree.get_formula())
+#                print("c : ", c)
+#                print("C : ", C)
+#                print("formula : ", self.print_tree())
+#              print("XC0 : ", XC0)
+            DC[i] = np.sum((XC0 - XF)**2) / norm
+            e += DC[i]**2
+            for j in range(0, i):
+                e -= np.abs(DC[i] * DC[j])
+    else:
+        e = 1000000000000000.
+    print("error : ", e)
+    return np.sum(e)
+
+def classifier_score(tree, c):
+    C = format_coefficients(tree, c)
+    X = tree.X
+    y = tree.y
+
+    print(C)
+    XF = eval(tree.get_formula()).reshape(-1, 1)
+    score = tree.fit_classifier(XF, y)
+
+    print("classifier score : ", score)
+    return score
 
 
-formula = generateSingleTree(2)
-train_filename = 'kaggle_data/train.csv'
-data = pd.read_csv(train_filename)
-X = data.drop(['target'], axis=1).values
-y = data[["target"]].values
-
-def coefficient_score(x):
-
-    return 0
-
-
-x0 = np.array([1.3, 0.7])
-res = minimize(rosen, x0,
-               method='nelder-mead',
-               options={'xtol': 1e-8, 'disp': True})

@@ -33,6 +33,19 @@ def generatePopulation(N=10):
     trees = np.array([])
     initial_depth = 3
     for i in range(0, N):
-        trees = np.append(trees, generateSingleTree(initial_depth))
-
+        tree = generateSingleTree(initial_depth)
+        trees = np.append(trees, tree)
     return trees
+
+
+def write_population(trees):
+    data = pd.DataFrame()
+    for i in range(0, len(trees)):
+        tree = trees[i]
+        data_tree = pd.concat(
+            [pd.DataFrame({'tree': [i] * len(tree.nodes)}),
+             tree.get_dataframe()],
+            axis=1
+        )
+        data = data.append(data_tree, ignore_index=True)
+    data.to_csv("population.csv")

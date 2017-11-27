@@ -74,17 +74,70 @@ def generatePopulation(N=100):
     return trees
 
 
-def write_population(trees):
+def propagate_population(trees):
+    for tree in trees:
+        tree.add_subtrees(trees)
+        tree = mutate_tree(tree)
+    return trees
+
+
+def cross_population(trees):
+    n = len(trees)
+    children = trees
+    for i in range(0, n):
+        trees[i].add_subtrees(trees)
+        ic = -1
+        while(ic < 0 | ic == i):
+            ic = np.random.random_integers(0, n - 1)
+        children[i] = cross_trees(trees[i], trees[ic])
+    return children
+
+
+def cut_population(trees, min_score=0.71):
+    survivors = np.array([])
+    for tree in trees:
+        if(tree.score > min_score):
+            survivors = np.append(survivors, tree)
+    return survivors
+
+
+def mutate_tree(tree):
+    split = False
+    while(split is False):
+        inode = np.random.random_integers(0, len(tree.nodes) - 1)
+        split = tree.split_node(inode)
+    return tree
+
+
+def cross_trees(tree, subtree):
+    crossed = False
+    while(crossed is False):
+        inode = np.random.random_integers(0, len(tree.nodes) - 1)
+        crossed = tree.graft_node(subtree, inode)
+    return tree
+
+
+def write_population(trees, igen=0, file="population.csv"):
     data = pd.DataFrame()
     for i in range(0, len(trees)):
         tree = trees[i]
         n_nodes = len(tree.nodes)
         data_tree = pd.concat(
             [pd.DataFrame({'tree': [i] * n_nodes,
+                           'generation': [igen] * n_nodes,
                            'score': [tree.score] * n_nodes}),
              get_dataframe(tree)],
             axis=1
         )
         data = data.append(data_tree, ignore_index=True)
-    data.to_csv("population.csv")
+    data.to_csv(file)
     return data
+
+
+
+
+
+
+
+
+

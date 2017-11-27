@@ -6,7 +6,7 @@ from submissions.formulas.OptimizeCoefficients import *
 
 
 class Node:
-    def __init__(self, id, obj, a, b=-1, c=-1):
+    def __init__(self, id, obj, value, weight, a, b=-1, c=-1):
         # a -> b,  c
         self.id = id
         self.a = a
@@ -38,6 +38,7 @@ class FormulaTree:
         self.coefficients = np.array([])
         self.variables = np.array(range(20, 30))
         self.operations = ["*", "+", "-"]
+        self.subtrees = []
         self.nodes = np.array([])
         self.add_node(0, "")
 
@@ -64,6 +65,9 @@ class FormulaTree:
         pass
         return subtree
 
+    def add_subtrees(self, trees):
+        self.subtrees = np.append(self.subtrees, trees)
+
     def get_formula(self, inode=-1):
         if(inode < 0):
             inode = self.root
@@ -86,7 +90,32 @@ class FormulaTree:
                     )
         return text
 
-    def add_node(self, a=-1, var=""):
+    def graft_node(self, subtree, inode):
+        grafted = False
+        node = self.nodes[inode]
+        if(node.status is 1):
+            n = len(self.nodes)
+            subtree.reset_ids(n, skip_root=False)
+            subroot_id = subtree.root - n + 1
+            subroot = subtree.nodes[subroot_id]
+            self.nodes = np.append(self.nodes,
+                                   np.delete(subtree.nodes, subroot_id))
+            node.b = subroot.b
+            node.c = subroot.c
+            node.object = subroot.object
+            node.value = 1.
+            node.weight = subtree.score
+            node.status = 2
+            self.nodes[node.b].a = inode
+            self.nodes[node.c].a = inode
+            self.coefficients = np.append(self.coefficients,
+                                          subtree.coefficients)
+            grafted = True
+        else:
+            print("Cannot graft subtree in this node : ", inode)
+        return grafted
+
+    def add_node(self, a=-1, var="", value=1., weight=1.):
         if(var == ""):
             var_id = self.variables[
                 np.random.random_integers(0, len(self.variables) - 1)
@@ -95,7 +124,7 @@ class FormulaTree:
         i = len(self.nodes)
         if(self.verbose):
             print("adding node : ", i)
-        self.nodes = np.append(self.nodes, Node(i, var, a, -1, -1))
+        self.nodes = np.append(self.nodes, Node(i, var, 1., 1., a, -1, -1))
         self.nleaf += 1
         return i
 
@@ -115,11 +144,18 @@ class FormulaTree:
             if(self.nodes[i].status == -1):
                 self.nodes = np.delete(self.nodes, i)
 
-    def reset_ids(self, offset=0):
+    def reset_ids(self, offset=0, skip_root=False):
         new_ids = np.array(range(0, len(self.nodes)))
         ids = np.array([])
+
+        new_id = np.full(len(self.nodes), -1)
+        a = np.full(len(self.nodes), -1)
+        b = np.full(len(self.nodes), -1)
+        c = np.full(len(self.nodes), -1)
+
         for node in self.nodes:
-            if(node.status != -1):
+            if(node.status != -1 &
+                    (skip_root is False | node.id != self.root)):
                 ids = np.append(ids, int(node.id))
 
         if(self.verbose):
@@ -127,7 +163,8 @@ class FormulaTree:
             print("new_ids (", len(new_ids), ") : ", new_ids)
 
         for i in range(0, len(self.nodes)):
-            if(self.nodes[i].status != -1):
+            if(self.nodes[i].status != -1 &
+                    (skip_root is False | node.id != self.root)):
 
                 if(self.verbose):
                     print("node i : ", i)
@@ -135,20 +172,23 @@ class FormulaTree:
                     print("b : ", self.nodes[i].b)
                     print("c : ", self.nodes[i].c)
 
-                new_id, a, b, c = -1, -1, -1, -1
-                new_id = np.where(ids == self.nodes[i].id)[0][0] + offset
+                new_id[i] = np.where(ids == self.nodes[i].id)[0][0] + offset
                 if(self.nodes[i].id != self.root):
-                    a = np.where(ids == self.nodes[i].a)[0][0] + offset
+                    a[i] = np.where(ids == self.nodes[i].a)[0][0] + offset
                 else:
-                    self.root = new_id
+                    if(self.verbose):
+                        print("Found the root : ", self.root)
+                    self.root = new_id[i]
                 if(self.nodes[i].status == 2):
-                    b = np.where(ids == self.nodes[i].b)[0][0] + offset
-                    c = np.where(ids == self.nodes[i].c)[0][0] + offset
+                    b[i] = np.where(ids == self.nodes[i].b)[0][0] + offset
+                    c[i] = np.where(ids == self.nodes[i].c)[0][0] + offset
 
-                self.nodes[i].a = a
-                self.nodes[i].b = b
-                self.nodes[i].c = c
-                self.nodes[i].id = new_id
+        for i in range(0, len(self.nodes)):
+            if(self.nodes[i].status != -1):
+                self.nodes[i].a = a[i]
+                self.nodes[i].b = b[i]
+                self.nodes[i].c = c[i]
+                self.nodes[i].id = new_id[i]
 
     def add_coefficients(self, cname="C", constant=True):
         add_brackets = True
@@ -239,8 +279,8 @@ class FormulaTree:
         else:
             if(var0 == "preserve"):
                 var0 = node.object
-            node.b = self.add_node(node.id, var)
-            node.c = self.add_node(node.id, var0)
+            node.b = self.add_node(node.id, var, 1., 1.)
+            node.c = self.add_node(node.id, var0, 1., 1.)
             node.status = 2
             node.object = op
             self.nodes[inode] = node
@@ -250,8 +290,8 @@ class FormulaTree:
 
     def split_root(self, op="+", obj=""):
         n = len(self.nodes)
-        self.add_node(-1, op)
-        self.add_node(n, obj)
+        self.add_node(-1, op, 1., 1.)
+        self.add_node(n, obj, 1., 1.)
         self.nodes[self.root].a = n
         self.nodes[n].b = self.root
         self.nodes[n].c = n + 1
@@ -285,6 +325,8 @@ class FormulaTree:
         self.nleaf += 1
         self.nodes[inode].object = obj
         self.nodes[inode].status = 1
+        self.nodes[inode].value = 1.
+        self.nodes[inode].weight = 1.
         self.nodes[inode].b = -1
         self.nodes[inode].c = -1
         self.reset_ids()
@@ -294,4 +336,3 @@ class FormulaTree:
     def reconnect_node(self, inode, subtree):
         node = self.nodes[inode]
         pass
-

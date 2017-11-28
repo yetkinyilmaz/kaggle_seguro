@@ -93,21 +93,34 @@ class FormulaTree:
     def graft_node(self, subtree, inode):
         grafted = False
         node = self.nodes[inode]
+        parent = self.nodes[node.a]
+        b = False
+        if(parent.b == inode):
+            b = True
         if(node.status is 1):
+
+            print n, ids
+            self.nodes[inode].status = -1
+            self.reset_ids()
+            self.clean_dead()
+
+
             n = len(self.nodes)
-            subtree.reset_ids(n, skip_root=False)
-            subroot_id = subtree.root - n + 1
-            subroot = subtree.nodes[subroot_id]
-            self.nodes = np.append(self.nodes,
-                                   np.delete(subtree.nodes, subroot_id))
-            node.b = subroot.b
-            node.c = subroot.c
-            node.object = subroot.object
-            node.value = 1.
-            node.weight = subtree.score
-            node.status = 2
-            self.nodes[node.b].a = inode
-            self.nodes[node.c].a = inode
+
+print n, ids
+
+clean stuff in reset_ids
+
+
+            subtree.reset_ids(n)
+            self.nodes = np.append(self.nodes, subtree.nodes)
+            if(b is True):
+                self.nodes[parent.id].b = subtree.root
+            else:
+                self.nodes[parent.id].c = subtree.root
+
+            self.nodes[subtree.root].weight = subtree.score
+            self.nodes[subtree.root].a = parent.id
             self.coefficients = np.append(self.coefficients,
                                           subtree.coefficients)
             grafted = True

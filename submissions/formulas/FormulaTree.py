@@ -1,4 +1,5 @@
 import numpy as np
+import copy
 
 from sklearn.tree import DecisionTreeClassifier
 from scipy.optimize import minimize
@@ -31,12 +32,14 @@ class Node:
 
 class FormulaTree:
     def __init__(self):
-        self.verbose = False
+        self.verbose = True
         self.nleaf = 0
         self.root = 0
         self.score = 0
         self.coefficients = np.array([])
-        self.variables = np.array(range(20, 30))
+        self.variables = np.array([])
+        self.all_variables = np.array(range(20, 30))
+
         self.operations = ["*", "+", "-"]
         self.subtrees = []
         self.nodes = np.array([])
@@ -90,29 +93,61 @@ class FormulaTree:
                     )
         return text
 
-    def graft_node(self, subtree, inode):
+    def print_nodes(self):
+        i = 0
+        print("==========================")
+        print("Number of nodes : ", len(self.nodes))
+        print("Root node : ", self.root)
+        for node in self.nodes:
+            print("- - - - - - - - - - - - - - - - ")
+            print("Entry  : ", i)
+            print("id     : ", node.id)
+#            print("object : ", node.object)
+            print("a,b,c    : ", node.a, ",", node.b, ",", node.c)
+            print("status : ", node.status)
+#            print("value,  : ", node.value)
+#            print("weight : ", node.weight)
+            i += 1
+        print("==========================")
+
+    def graft_node(self, subtree_input, inode):
         grafted = False
-        node = self.nodes[inode]
-        parent = self.nodes[node.a]
-        b = False
-        if(parent.b == inode):
-            b = True
+        node = copy.deepcopy(self.nodes[inode])
+
         if(node.status is 1):
 
-            print n, ids
+            subtree = copy.deepcopy(subtree_input)
+            parent = self.nodes[node.a]
+            b = False
+            if(parent.b == inode):
+                b = True
+            print("status is 1")
+            self.print_nodes()
             self.nodes[inode].status = -1
-            self.reset_ids()
-            self.clean_dead()
+            if(b is True):
+                self.nodes[parent.id].b = -1
+            else:
+                self.nodes[parent.id].c = -1
 
+            print("reset ids")
+
+            self.reset_ids()
+            self.print_nodes()
+
+            print("clean dead")
+
+            self.clean_dead()
+            self.print_nodes()
 
             n = len(self.nodes)
 
-print n, ids
+            print("subtree")
 
-clean stuff in reset_ids
-
-
+            subtree.print_nodes()
+            print("subtree reset ids")
             subtree.reset_ids(n)
+            subtree.print_nodes()
+
             self.nodes = np.append(self.nodes, subtree.nodes)
             if(b is True):
                 self.nodes[parent.id].b = subtree.root
@@ -123,17 +158,29 @@ clean stuff in reset_ids
             self.nodes[subtree.root].a = parent.id
             self.coefficients = np.append(self.coefficients,
                                           subtree.coefficients)
+            self.variables = np.append(self.variables,
+                                       subtree.variables)
             grafted = True
         else:
             print("Cannot graft subtree in this node : ", inode)
         return grafted
 
+    def pick_variable(self):
+        var_id = self.all_variables[
+            np.random.random_integers(0, len(self.all_variables) - 1)
+        ]
+        var = "X[:," + str(var_id) + "]"
+        if(np.in1d(var_id, self.variables, invert=True)):
+            self.variables = np.append(self.variables, var_id)
+        return var
+
+    def pick_operation(self):
+        op = np.random.random_integers(0, len(self.operations) - 1)
+        return self.operations[op]
+
     def add_node(self, a=-1, var="", value=1., weight=1.):
         if(var == ""):
-            var_id = self.variables[
-                np.random.random_integers(0, len(self.variables) - 1)
-            ]
-            var = "X[:," + str(var_id) + "]"
+            var = self.pick_variable()
         i = len(self.nodes)
         if(self.verbose):
             print("adding node : ", i)
@@ -157,7 +204,7 @@ clean stuff in reset_ids
             if(self.nodes[i].status == -1):
                 self.nodes = np.delete(self.nodes, i)
 
-    def reset_ids(self, offset=0, skip_root=False):
+    def reset_ids(self, offset=0):
         new_ids = np.array(range(0, len(self.nodes)))
         ids = np.array([])
 
@@ -167,8 +214,7 @@ clean stuff in reset_ids
         c = np.full(len(self.nodes), -1)
 
         for node in self.nodes:
-            if(node.status != -1 &
-                    (skip_root is False | node.id != self.root)):
+            if(node.status != -1):
                 ids = np.append(ids, int(node.id))
 
         if(self.verbose):
@@ -176,8 +222,7 @@ clean stuff in reset_ids
             print("new_ids (", len(new_ids), ") : ", new_ids)
 
         for i in range(0, len(self.nodes)):
-            if(self.nodes[i].status != -1 &
-                    (skip_root is False | node.id != self.root)):
+            if(self.nodes[i].status != -1):
 
                 if(self.verbose):
                     print("node i : ", i)
@@ -193,8 +238,10 @@ clean stuff in reset_ids
                         print("Found the root : ", self.root)
                     self.root = new_id[i]
                 if(self.nodes[i].status == 2):
-                    b[i] = np.where(ids == self.nodes[i].b)[0][0] + offset
-                    c[i] = np.where(ids == self.nodes[i].c)[0][0] + offset
+                    if(self.nodes[i].b != -1):
+                        b[i] = np.where(ids == self.nodes[i].b)[0][0] + offset
+                    if(self.nodes[i].c != -1):
+                        c[i] = np.where(ids == self.nodes[i].c)[0][0] + offset
 
         for i in range(0, len(self.nodes)):
             if(self.nodes[i].status != -1):
@@ -276,9 +323,7 @@ clean stuff in reset_ids
 
     def split_node(self, inode, op="", var="", var0="preserve"):
         if(op == ""):
-            op = self.operations[
-                np.random.random_integers(0, len(self.operations) - 1)
-            ]
+            op = self.pick_operation()
 
         if(self.verbose):
             print("splitting node : ", inode)
@@ -316,16 +361,9 @@ clean stuff in reset_ids
         node = self.nodes[inode]
         if(obj == ""):
             if(node.status == 1):
-                var_id = self.variables[
-                    np.random.random_integers(0, len(self.variables) - 1)
-                ]
-                var = "X[:," + str(var_id) + "]"
-                obj = var
+                obj = self.pick_variable()
             else:
-                op = self.operations[
-                    np.random.random_integers(0, len(self.operations) - 1)
-                ]
-                obj = op
+                obj = self.pick_operation()
         node.object = obj
         self.nodes[inode] = node
 

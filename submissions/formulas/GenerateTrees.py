@@ -1,5 +1,6 @@
 
 import numpy as np
+import copy
 
 from submissions.formulas.FormulaTree import *
 
@@ -35,7 +36,7 @@ def write_tree(tree):
     df.to_csv("tree.csv")
 
 
-def generateSingleTree(Nsplit=12):
+def generateSingleTree(Nsplit=1):
     verbose = False
     ft = FormulaTree()
     n = 0
@@ -58,12 +59,10 @@ def generateSingleTree(Nsplit=12):
 
 def generatePopulation(N=100):
     trees = np.array([])
-    initial_depth = 3
-
     X, y = load_data()
 
     for i in range(0, N):
-        tree = generateSingleTree(initial_depth)
+        tree = generateSingleTree()
         tree.set_classifier()
         tree.fit_coefficients(X, y)
         trees = np.append(trees, tree)
@@ -75,15 +74,16 @@ def generatePopulation(N=100):
 
 
 def propagate_population(trees):
-    for tree in trees:
+    children = trees
+    for tree in children:
         tree.add_subtrees(trees)
         tree = mutate_tree(tree)
-    return trees
+    return children
 
 
 def cross_population(trees):
     n = len(trees)
-    children = trees
+    children = copy.deepcopy(trees)
     for i in range(0, n):
         trees[i].add_subtrees(trees)
         ic = -1
@@ -93,7 +93,7 @@ def cross_population(trees):
     return children
 
 
-def cut_population(trees, min_score=0.71):
+def cut_population(trees, min_score=0.6):
     survivors = np.array([])
     for tree in trees:
         if(tree.score > min_score):

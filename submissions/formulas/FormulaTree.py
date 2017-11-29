@@ -32,7 +32,7 @@ class Node:
 
 class FormulaTree:
     def __init__(self):
-        self.verbose = True
+        self.verbose = False
         self.nleaf = 0
         self.root = 0
         self.score = 0
@@ -94,21 +94,22 @@ class FormulaTree:
         return text
 
     def print_nodes(self):
-        i = 0
-        print("==========================")
-        print("Number of nodes : ", len(self.nodes))
-        print("Root node : ", self.root)
-        for node in self.nodes:
-            print("- - - - - - - - - - - - - - - - ")
-            print("Entry  : ", i)
-            print("id     : ", node.id)
-#            print("object : ", node.object)
-            print("a,b,c    : ", node.a, ",", node.b, ",", node.c)
-            print("status : ", node.status)
-#            print("value,  : ", node.value)
-#            print("weight : ", node.weight)
-            i += 1
-        print("==========================")
+        if(self.verbose):
+            i = 0        
+            print("==========================")
+            print("Number of nodes : ", len(self.nodes))
+            print("Root node : ", self.root)
+            for node in self.nodes:
+                print("- - - - - - - - - - - - - - - - ")
+                print("Entry  : ", i)
+                print("id     : ", node.id)
+    #            print("object : ", node.object)
+                print("a,b,c    : ", node.a, ",", node.b, ",", node.c)
+                print("status : ", node.status)
+    #            print("value,  : ", node.value)
+    #            print("weight : ", node.weight)
+                i += 1
+            print("==========================")
 
     def graft_node(self, subtree_input, inode):
         grafted = False
@@ -121,7 +122,6 @@ class FormulaTree:
             b = False
             if(parent.b == inode):
                 b = True
-            print("status is 1")
             self.print_nodes()
             self.nodes[inode].status = -1
             if(b is True):
@@ -129,22 +129,15 @@ class FormulaTree:
             else:
                 self.nodes[parent.id].c = -1
 
-            print("reset ids")
-
             self.reset_ids()
             self.print_nodes()
-
-            print("clean dead")
 
             self.clean_dead()
             self.print_nodes()
 
             n = len(self.nodes)
 
-            print("subtree")
-
             subtree.print_nodes()
-            print("subtree reset ids")
             subtree.reset_ids(n)
             subtree.print_nodes()
 
@@ -156,13 +149,15 @@ class FormulaTree:
 
             self.nodes[subtree.root].weight = subtree.score
             self.nodes[subtree.root].a = parent.id
+            print("Remember to remove coefficient")
             self.coefficients = np.append(self.coefficients,
                                           subtree.coefficients)
             self.variables = np.append(self.variables,
                                        subtree.variables)
             grafted = True
         else:
-            print("Cannot graft subtree in this node : ", inode)
+            if(self.verbose):
+                print("Cannot graft subtree in this node : ", inode)
         return grafted
 
     def pick_variable(self):

@@ -5,11 +5,13 @@ from scipy.optimize import minimize
 
 # Coefficient fitting related stuff.
 
+
 def format_coefficients(tree, c):
     # add back the coeficients that were trivial in the fitting
     c = np.insert(c, 0, 1.)
     c = np.insert(c, tree.npar - 1, 0.)
     return c
+
 
 def coefficient_target_error(tree, c):
     C = format_coefficients(tree, c)
@@ -19,6 +21,7 @@ def coefficient_target_error(tree, c):
     XF = eval(tree.get_formula())
     e = y**2 - XF**2
     return np.sum(e)
+
 
 def coefficient_imbalance(tree, c):
     nc = len(c)
@@ -48,16 +51,22 @@ def coefficient_imbalance(tree, c):
     print("error : ", e)
     return np.sum(e)
 
+
 def classifier_score(tree, c):
     C = format_coefficients(tree, c)
     X = tree.X
     y = tree.y
 
-    print(C)
+#    print(C)
     XF = eval(tree.get_formula()).reshape(-1, 1)
-    score = tree.fit_classifier(XF, y)
+    X = np.delete(X, tree.variables, axis=1)
+    X = np.concatenate((X, XF.reshape(-1, 1)), axis=1)
+    score = tree.fit_classifier(X, y)
 
     print("classifier score : ", score)
     return score
+
+
+
 
 

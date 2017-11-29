@@ -16,26 +16,6 @@ def load_data(n_fit=1000000):
     return X, y
 
 
-def get_dataframe(tree):
-    df = pd.DataFrame({'id': [], 'a': [], 'b': [], 'c': [],
-                       'object': [], 'status': [], 'value': [], 'weight': []})
-    ic = 0
-    for node in tree.nodes:
-        value = 0
-        if("C" in node.object):
-            value = tree.coefficients[ic]
-            ic += 1
-        df = df.append({'id': node.id, 'a': node.a, 'b': node.b, 'c': node.c,
-                        'object': node.object, 'status': node.status,
-                        'value': value, 'weight': 0}, ignore_index=True)
-    return df
-
-
-def write_tree(tree):
-    df = tree.get_dataframe()
-    df.to_csv("tree.csv")
-
-
 def generateSingleTree(Nsplit=1):
     verbose = False
     ft = FormulaTree()
@@ -115,29 +95,6 @@ def cross_trees(tree, subtree):
         inode = np.random.random_integers(0, len(tree.nodes) - 1)
         crossed = tree.graft_node(subtree, inode)
     return tree
-
-
-def write_population(trees, igen=0, file="population.csv"):
-    data = pd.DataFrame()
-    for i in range(0, len(trees)):
-        tree = trees[i]
-        n_nodes = len(tree.nodes)
-        data_tree = pd.concat(
-            [pd.DataFrame({'tree': [i] * n_nodes,
-                           'generation': [igen] * n_nodes,
-                           'score': [tree.score] * n_nodes}),
-             get_dataframe(tree)],
-            axis=1
-        )
-        data = data.append(data_tree, ignore_index=True)
-    data.to_csv(file)
-    return data
-
-
-
-
-
-
 
 
 

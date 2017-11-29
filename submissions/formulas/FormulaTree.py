@@ -36,6 +36,7 @@ class FormulaTree:
         self.nleaf = 0
         self.root = 0
         self.score = 0
+        self.generation = 0
         self.coefficients = np.array([])
         self.variables = np.array([])
         self.all_variables = np.array(range(20, 30))

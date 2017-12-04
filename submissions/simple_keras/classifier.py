@@ -25,7 +25,7 @@ class Classifier(BaseEstimator):
         print(self.predict(X))
 
     def predict(self, X):
-        y = self.clf.predict(X).flatten()
+        y = np.transpose(self.clf.predict(X).flatten())
         print(y)
         return y
 

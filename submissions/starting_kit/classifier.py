@@ -10,12 +10,9 @@ class Classifier(BaseEstimator):
         self.clf = RandomForestClassifier(
             n_estimators=2, max_leaf_nodes=2, random_state=61)
         self.clf.fit(X, y)
-        print(self.predict(X))
 
     def predict(self, X):
-        y = self.clf.predict(X)
-        print(y)
-        return y
+        return self.clf.predict(X)
 
     def predict_proba(self, X):
         return self.clf.predict_proba(X)

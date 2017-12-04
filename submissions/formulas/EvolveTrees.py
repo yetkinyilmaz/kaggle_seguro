@@ -13,9 +13,19 @@ def evolve(n=100):
                 trees = cross_population(trees)
             else:
                 trees = propagate_population(trees)
+
         trees = np.append(trees, generatePopulation(5))
-        trees = cut_population(trees, min_score=0.52)
+
+        scores = np.array([])
+        for tree in trees:
+            scores = np.append(scores, tree.score)
+
+        top_score = np.percentile(scores, 95)
+        tolerance = 0.01
+        print("Top 5% Score : ", top_score)
+        trees = cut_population(trees, min_score=(top_score - tolerance))
         file = "output/generation_" + str(i) + ".csv"
         write_trees(trees, i, file)
+
 
 evolve()

@@ -13,8 +13,9 @@ def get_dataframe(tree):
         if("C" in node.object):
             value = node.value
             ic += 1
-        df = df.append({'id': node.id, 'a': node.a, 'b': node.b, 'c': node.c,
-                        'object': node.object, 'status': node.status,
+        df = df.append({'id': int(node.id), 'a': int(node.a),
+                        'b': int(node.b), 'c': int(node.c),
+                        'object': node.object, 'status': int(node.status),
                         'value': value, 'weight': 0}, ignore_index=True)
     return df
 

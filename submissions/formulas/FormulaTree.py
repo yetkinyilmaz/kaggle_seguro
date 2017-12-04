@@ -14,8 +14,8 @@ class Node:
         self.b = b
         self.c = c
         self.object = obj
-        self.value = 1.
-        self.weight = 1.
+        self.value = value
+        self.weight = weight
         self.status = 1
         if((obj == "=") | (obj == "+") | (obj == "*")):
             self.status = 2
@@ -32,7 +32,7 @@ class Node:
 
 class FormulaTree:
     def __init__(self):
-        self.verbose = False
+        self.verbose = True
         self.nleaf = 0
         self.root = 0
         self.score = 0
@@ -44,7 +44,7 @@ class FormulaTree:
         self.operations = ["*", "+", "-"]
         self.subtrees = []
         self.nodes = np.array([])
-        self.add_node(0, "")
+        self.add_node()
 
     def set_classifier(self):
         self.clf = DecisionTreeClassifier(
@@ -96,7 +96,7 @@ class FormulaTree:
 
     def print_nodes(self):
         if(self.verbose):
-            i = 0        
+            i = 0
             print("==========================")
             print("Number of nodes : ", len(self.nodes))
             print("Root node : ", self.root)
@@ -112,54 +112,15 @@ class FormulaTree:
                 i += 1
             print("==========================")
 
-    def graft_node(self, subtree_input, inode):
-        grafted = False
-        node = copy.deepcopy(self.nodes[inode])
-
-        if(node.status is 1):
-
-            subtree = copy.deepcopy(subtree_input)
-            parent = self.nodes[node.a]
-            b = False
-            if(parent.b == inode):
-                b = True
-            self.print_nodes()
-            self.nodes[inode].status = -1
-            if(b is True):
-                self.nodes[parent.id].b = -1
-            else:
-                self.nodes[parent.id].c = -1
-
-            self.reset_ids()
-            self.print_nodes()
-
-            self.clean_dead()
-            self.print_nodes()
-
-            n = len(self.nodes)
-
-            subtree.print_nodes()
-            subtree.reset_ids(n)
-            subtree.print_nodes()
-
-            self.nodes = np.append(self.nodes, subtree.nodes)
-            if(b is True):
-                self.nodes[parent.id].b = subtree.root
-            else:
-                self.nodes[parent.id].c = subtree.root
-
-            self.nodes[subtree.root].weight = subtree.score
-            self.nodes[subtree.root].a = parent.id
-            print("Remember to remove coefficient")
-            self.coefficients = np.append(self.coefficients,
-                                          subtree.coefficients)
-            self.variables = np.append(self.variables,
-                                       subtree.variables)
-            grafted = True
-        else:
-            if(self.verbose):
-                print("Cannot graft subtree in this node : ", inode)
-        return grafted
+    def add_node(self, a=-1, var="", value=1., weight=1.):
+        if(var == ""):
+            var = self.pick_variable()
+        i = len(self.nodes)
+        if(self.verbose):
+            print("adding node : ", i)
+        self.nodes = np.append(self.nodes, Node(i, var, 1., 1., a, -1, -1))
+        self.nleaf += 1
+        return i
 
     def pick_variable(self):
         var_id = self.all_variables[
@@ -173,16 +134,6 @@ class FormulaTree:
     def pick_operation(self):
         op = np.random.random_integers(0, len(self.operations) - 1)
         return self.operations[op]
-
-    def add_node(self, a=-1, var="", value=1., weight=1.):
-        if(var == ""):
-            var = self.pick_variable()
-        i = len(self.nodes)
-        if(self.verbose):
-            print("adding node : ", i)
-        self.nodes = np.append(self.nodes, Node(i, var, 1., 1., a, -1, -1))
-        self.nleaf += 1
-        return i
 
     def kill_node(self, inode):
         if(self.verbose):
@@ -383,3 +334,54 @@ class FormulaTree:
     def reconnect_node(self, inode, subtree):
         node = self.nodes[inode]
         pass
+
+    def graft_node(self, subtree_input, inode):
+        grafted = False
+        node = copy.deepcopy(self.nodes[inode])
+
+        if(node.status == 1 & inode != self.root):
+            print("grafting on node : ", inode)
+            self.print_nodes()
+            subtree = copy.deepcopy(subtree_input)
+            parent = self.nodes[int(node.a)]
+            parent_id = int(parent.id)
+            print("Parent is : ", parent_id)
+            b = False
+            if(parent.b == inode):
+                b = True
+            self.nodes[inode].status = -1
+            if(b is True):
+                self.nodes[parent_id].b = -1
+            else:
+                self.nodes[parent_id].c = -1
+
+            self.reset_ids()
+            self.print_nodes()
+
+            self.clean_dead()
+            self.print_nodes()
+
+            n = len(self.nodes)
+
+            subtree.print_nodes()
+            subtree.reset_ids(n)
+            subtree.print_nodes()
+
+            self.nodes = np.append(self.nodes, subtree.nodes)
+            if(b is True):
+                self.nodes[parent_id].b = subtree.root
+            else:
+                self.nodes[parent_id].c = subtree.root
+
+            self.nodes[subtree.root].weight = subtree.score
+            self.nodes[subtree.root].a = parent.id
+            print("Remember to remove coefficient")
+            self.coefficients = np.append(self.coefficients,
+                                          subtree.coefficients)
+            self.variables = np.append(self.variables,
+                                       subtree.variables)
+            grafted = True
+        else:
+            if(self.verbose):
+                print("Cannot graft subtree in this node : ", inode)
+        return grafted

@@ -19,6 +19,7 @@ def load_data(n_fit=1000000):
 def generateSingleTree(Nsplit=1):
     verbose = False
     ft = FormulaTree()
+    ft.add_node()
     n = 0
 
     while(n < Nsplit):

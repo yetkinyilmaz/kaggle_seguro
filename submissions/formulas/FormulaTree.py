@@ -44,7 +44,6 @@ class FormulaTree:
         self.operations = ["*", "+", "-"]
         self.subtrees = []
         self.nodes = np.array([])
-        self.add_node()
 
     def set_classifier(self):
         self.clf = DecisionTreeClassifier(

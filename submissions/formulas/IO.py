@@ -68,7 +68,6 @@ def read_trees(file):
 
         for ino in node_id:
             inode = int(ino)
-            print("inode : ", inode)
             node = Node(id=node_id[inode],
                         obj=node_object[inode],
                         value=node_value[inode],
@@ -89,7 +88,6 @@ def read_trees(file):
                         print("Coefficients got reshuffled somewhere!!!!")
                     node.coefficients = np.append(tree.coefficients,
                                                   node.value)
-                    print("Coefficient appended!!!")
                 if("X" in node.object):
                     node.variables = np.append(tree.variables, ivar)
 

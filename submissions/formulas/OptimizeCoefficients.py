@@ -67,6 +67,14 @@ def classifier_score(tree, c):
     return score
 
 
-
+def print_coefficients(tree):
+    cs = "C = []"
+    if(len(tree.coefficients) > 0):
+        cs = "C = [" + tree.coefficients[0]
+        for i in range(1, len(tree.coefficients)):
+            cs = cs + "," + str(tree.coefficients[i])
+        cs = cs + "]"
+    print(cs)
+    return cs
 
 

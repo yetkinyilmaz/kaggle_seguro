@@ -2,7 +2,7 @@ from submissions.formulas.GenerateTrees import *
 from submissions.formulas.IO import *
 
 
-def evolve(n=100):
+def evolve(n=10):
     for i in range(0, n):
 
         if(i == 0):

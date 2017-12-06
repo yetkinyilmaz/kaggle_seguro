@@ -25,14 +25,11 @@ class Node:
         #  2 : Branching operation
         #  3 : Coefficient
         #  4 : Solid
-        else:
-            self.b = 0
-            self.c = 0
 
 
 class FormulaTree:
     def __init__(self):
-        self.verbose = True
+        self.verbose = False
         self.nleaf = 0
         self.root = 0
         self.score = 0
@@ -76,8 +73,7 @@ class FormulaTree:
             inode = self.root
         if(self.verbose):
             print("printing tree starting from index ", inode)
-        index = inode
-        node = self.nodes[index]
+        node = self.nodes[int(inode)]
         status = node.status
         text = ""
         if(status == 1):
